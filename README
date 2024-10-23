@@ -19,18 +19,16 @@ This project implements a simulation of a multi-level page table in C. It provid
 To customize the page table behavior, you need to modify the `config.h` file. This file defines two key constants: `LEVELS` and `POBITS`.
 
 ### `LEVELS`
-
 - **Description**: The number of levels in the page table hierarchy.
 - **Range**: 1 to 6 (inclusive).
-- **Guidance**:
+- **Guidance**: 
   - Use lower values (e.g., 1 or 2) if you want a simpler page table structure with fewer indirections, which can be faster but may not handle larger virtual address spaces efficiently.
   - Use higher values (e.g., 4 to 6) if you need to support a larger virtual address space, at the cost of increased lookup time due to additional levels of indirection.
 
 ### `POBITS`
-
 - **Description**: The number of bits used for the page offset, which determines the size of each page.
 - **Range**: 4 to 18 (inclusive).
-- **Guidance**:
+- **Guidance**: 
   - A higher value for `POBITS` means larger pages, which can reduce the number of page table entries required, but may lead to more internal fragmentation.
   - A lower value for `POBITS` means smaller pages, which can reduce fragmentation but increase the number of entries and the overall memory overhead for page tables.
 
@@ -105,10 +103,10 @@ int main() {
 
 ## Big-O Analysis
 
-- **Time Complexity**:
+- **Time Complexity**: 
   - `page_allocate(size_t va)`: O(LEVELS). The function must traverse each level of the page table, making the time complexity proportional to the number of levels.
   - `translate(size_t va)`: O(LEVELS). Similar to `page_allocate()`, this function also traverses each level of the page table.
-- **Space Complexity**:
+- **Space Complexity**: 
   - The space complexity depends on the number of levels (`LEVELS`) and the number of allocated pages, as each level requires memory for storing page table entries. The higher the `LEVELS` and the more addresses allocated, the more memory required for page tables.
 
 ## Testing Hooks
@@ -121,5 +119,4 @@ This project is distributed under the terms specified in the `LICENSE` file. Ple
 
 ## Acknowledgements
 
-Special thanks to Professor Charles Reiss for guidance on page table structures, and to the University of Virginia's Computer Science Department for providing resources. Additionally, thanks to all peers (Thomas, James, and vvc8ba) for code reviews during the lab.
-
+Special thanks to Professor Charles Reiss for guidance on page table structures, and to the University of Virginia's Computer Science Department for providing resources. Additionally, thanks to all contributors who provided feedback and improvements to the implementation, and to peers for code reviews during the development phase.
