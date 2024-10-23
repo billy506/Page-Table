@@ -1,0 +1,125 @@
+﻿# Multi-Level Page Table
+
+## Overview
+
+This project implements a simulation of a multi-level page table in C. It provides functionality to allocate pages and translate virtual addresses to physical addresses using a multi-level page table structure. The configuration of the page table is determined by `LEVELS` and `POBITS`, which are defined in `config.h`. The implementation follows the requirements of setting up a page table hierarchy and simulating the translation of virtual addresses.
+
+## Files
+
+- `mlpt.c`: Contains the implementation of the page table allocation and translation functions.
+- `config.h`: Defines constants `LEVELS` and `POBITS`, which configure the number of page table levels and the number of bits for the page offset, respectively.
+  - **`LEVELS`**: The number of levels in the page table hierarchy. This value can be between 1 and 6, inclusive. It determines how many levels of page tables are used to translate a virtual address.
+  - **`POBITS`**: The number of bits used for the page offset. This value can be between 4 and 18, inclusive. It determines the size of each page and how much of the virtual address is used for the page offset.
+- `mlpt.h`: Declares the public API for the page table simulation, including functions such as `translate()` and `page_allocate()`.
+- `Makefile`: Used to compile the project into a library (`libmlpt.a`) and handle cleanup tasks.
+- `LICENSE`: Contains the license information for the project.
+
+## Customizing `config.h`
+
+To customize the page table behavior, you need to modify the `config.h` file. This file defines two key constants: `LEVELS` and `POBITS`.
+
+### `LEVELS`
+
+- **Description**: The number of levels in the page table hierarchy.
+- **Range**: 1 to 6 (inclusive).
+- **Guidance**:
+  - Use lower values (e.g., 1 or 2) if you want a simpler page table structure with fewer indirections, which can be faster but may not handle larger virtual address spaces efficiently.
+  - Use higher values (e.g., 4 to 6) if you need to support a larger virtual address space, at the cost of increased lookup time due to additional levels of indirection.
+
+### `POBITS`
+
+- **Description**: The number of bits used for the page offset, which determines the size of each page.
+- **Range**: 4 to 18 (inclusive).
+- **Guidance**:
+  - A higher value for `POBITS` means larger pages, which can reduce the number of page table entries required, but may lead to more internal fragmentation.
+  - A lower value for `POBITS` means smaller pages, which can reduce fragmentation but increase the number of entries and the overall memory overhead for page tables.
+
+When modifying these values, ensure that `(POBITS − 3) × (LEVELS + 1) <= 60` to avoid exceeding the maximum supported virtual address space.
+
+## Functions
+
+### `void page_allocate(size_t va)`
+
+Allocates memory for a given virtual address and sets up the mapping in the page table. If the page table does not exist, it will allocate the root page table and subsequent page tables as required. The function uses `posix_memalign` to ensure proper alignment of allocated pages.
+
+### `size_t translate(size_t va)`
+
+Translates a virtual address to a physical address using the current page table structure. If the virtual address has not been allocated, it returns a value with all bits set to `1` (i.e., `ALL_ONES`).
+
+## Compilation
+
+The project can be compiled into a static library (`libmlpt.a`) using the provided `Makefile`. To build the library and clean up compiled files, use the following commands:
+
+### Build the Library
+
+```sh
+make
+```
+
+### Clean Up
+
+```sh
+make clean
+```
+
+The `Makefile` defines:
+
+- `CC`: The compiler to be used (`gcc`).
+- `CFLAGS`: Compiler flags (`-Wall -Werror -I.`).
+- `LDFLAGS`: Linker flags.
+- Targets: `all` (default target to build the library) and `clean` (to remove compiled files).
+
+## Usage
+
+The API provided by `mlpt.h` allows users to allocate pages and translate virtual addresses. To manually test the translation functionality without implementing `page_allocate()`, you can manually set up the page table entries and then call `translate()` to verify the translation.
+
+### Example
+
+```c
+#include "mlpt.h"
+#include "config.h"
+#include <stdio.h>
+
+int main() {
+    page_allocate(0x1000);  // Allocate a page for virtual address 0x1000
+    size_t phys_addr = translate(0x1000);  // Translate virtual address 0x1000
+    if (phys_addr != ALL_ONES) {
+        printf("Physical address: 0x%lx\n", phys_addr);
+    } else {
+        printf("Translation failed: address not allocated.\n");
+    }
+    return 0;
+}
+```
+
+## Limitations and Known Bugs
+
+- **Address Space Limitations**: The implementation does not support cases where `(POBITS − 3) × (LEVELS + 1) > 60` due to exceeding the maximum supported virtual address space.
+- **Incomplete Features**: Currently, the implementation does not include mechanisms for freeing allocated pages, which may lead to memory leaks if the page table grows significantly during prolonged use.
+
+## Future Expansion
+
+- **Freeing Allocated Pages**: Implementing a function to free allocated pages would be beneficial to prevent memory leaks and improve the memory efficiency of the page table.
+- **Optimizations**: The current implementation allocates memory using `posix_memalign`. Future improvements could include more efficient memory management strategies or support for dynamic resizing of page tables.
+- **Concurrency**: Adding thread safety to support concurrent access to the page table would be useful for multi-threaded environments.
+
+## Big-O Analysis
+
+- **Time Complexity**:
+  - `page_allocate(size_t va)`: O(LEVELS). The function must traverse each level of the page table, making the time complexity proportional to the number of levels.
+  - `translate(size_t va)`: O(LEVELS). Similar to `page_allocate()`, this function also traverses each level of the page table.
+- **Space Complexity**:
+  - The space complexity depends on the number of levels (`LEVELS`) and the number of allocated pages, as each level requires memory for storing page table entries. The higher the `LEVELS` and the more addresses allocated, the more memory required for page tables.
+
+## Testing Hooks
+
+- **Manual Testing**: The example code provided above can be used to test the basic functionality of `page_allocate()` and `translate()`. Future expansions may include automated tests using unit testing frameworks to ensure the correctness of page table operations.
+
+## License
+
+This project is distributed under the terms specified in the `LICENSE` file. Please refer to `LICENSE` for more details.
+
+## Acknowledgements
+
+Special thanks to Professor Charles Reiss for guidance on page table structures, and to the University of Virginia's Computer Science Department for providing resources. Additionally, thanks to all peers (Thomas, James, and vvc8ba) for code reviews during the lab.
+
